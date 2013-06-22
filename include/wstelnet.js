@@ -3,10 +3,10 @@
  * Copyright (C) 2011 Joel Martin
  * Licensed under LGPL-3 (see LICENSE.txt)
  *
- * Includes tansi.js from:
+ * Included VT100.js from:
  *   http://code.google.com/p/sshconsole
  * Which was modified from:
- *   http://fzort.org/bi/o.php#tansi_js
+ *   http://fzort.org/bi/o.php#vt100_js
  *
  * Telnet protocol:
  *   http://www.networksorcery.com/enp/protocol/telnet.htm
@@ -23,7 +23,7 @@
  *   http://www.hobbyprojects.com/ascii-table/ascii-table.html
  *
  * Other web consoles:
- *   http://stackoverflow.com/questions/244750/ajax-console-window-with-ansi-tansi-support
+ *   http://stackoverflow.com/questions/244750/ajax-console-window-with-ansi-vt100-support
  *
  * This version has been slightly adjusted by XRM@github / YEN@nightfall (17jun13).
  * (Made echo on-off-switchable, changed to ansi and using keypress instead of the key-map)
