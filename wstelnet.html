@@ -7,7 +7,7 @@
         <script src="include/websock.js"></script>
         <script src="include/webutil.js"></script> 
         <script src="include/keysym.js"></script> 
-        <script src="include/VT100.js"></script> 
+        <script src="include/TANSI.js"></script> 
         <script src="include/wstelnet.js"></script> 
         <!-- Uncomment to activate firebug lite -->
         <!--
@@ -18,7 +18,8 @@
 
     </head>
 
-    <body>
+    <body style="background-color: #1D1D1D;">
+        <noscript style="color: #ff0000; font-family: monospace;">Please enable Javascript.</noscript>
 
         Host: <input id='host' style='width:100'>&nbsp;
         Port: <input id='port' style='width:50'>&nbsp;
@@ -28,7 +29,7 @@
 
         <br><br>
 
-        <pre id="terminal"></pre>
+        <pre id="terminal" style="width: 52em; margin: 0 auto; border: 1px solid red;"></pre>
 
         <script>
             var telnet;
@@ -57,6 +58,9 @@
                 $D('connectButton').disabled = false;
                 $D('connectButton').value = "Connect";
                 $D('connectButton').onclick = connect;
+                var lines = document.getElementById("terminal").innerHTML.split("\n");
+                lines.pop();
+                document.getElementById("terminal").innerHTML =  lines.join("\n") + "\n<span style='font-style: italic; color: #00FF00;'>Disconnected.</span><br>";
             }
 
             window.onload = function() {

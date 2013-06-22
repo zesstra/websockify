@@ -3,10 +3,10 @@
  * Copyright (C) 2011 Joel Martin
  * Licensed under LGPL-3 (see LICENSE.txt)
  *
- * Includes VT100.js from:
+ * Includes tansi.js from:
  *   http://code.google.com/p/sshconsole
  * Which was modified from:
- *   http://fzort.org/bi/o.php#vt100_js
+ *   http://fzort.org/bi/o.php#tansi_js
  *
  * Telnet protocol:
  *   http://www.networksorcery.com/enp/protocol/telnet.htm
@@ -23,17 +23,18 @@
  *   http://www.hobbyprojects.com/ascii-table/ascii-table.html
  *
  * Other web consoles:
- *   http://stackoverflow.com/questions/244750/ajax-console-window-with-ansi-vt100-support
+ *   http://stackoverflow.com/questions/244750/ajax-console-window-with-ansi-tansi-support
+ *
+ * This version has been slightly adjusted by XRM@github / YEN@nightfall (17jun13).
+ * (Made echo on-off-switchable, changed to ansi and using keypress instead of the key-map)
+ * (Also adjusted code to use TANSI.js instead of VT100.js)
  */
-
-
-
 
 function Telnet(target, connect_callback, disconnect_callback) {
 
 var that = {},  // Public API interface
-    vt100, ws, sQ = [];
-    termType = "VT100";
+    tansi, ws, sQ = [];
+    termType = "ANSI";
 
 
 Array.prototype.pushStr = function (str) {
@@ -66,34 +67,47 @@ function do_recv() {
             value = arr.shift();
             switch (code) {
             case 254: // DONT
-                Util.Debug("Got Cmd DONT '" + value + "', ignoring");
+                if (value === 1) {
+                    tansi.noecho();
+                }
+                Util.Info("Got Cmd DONT '" + value + "', ignoring");
                 break;
             case 253: // DO
-                Util.Debug("Got Cmd DO '" + value + "'");
-                if (value === 24) {
+                Util.Info("Got Cmd DO '" + value + "'");
+                if (value === 1) {
+                    tansi.echo();
+                    Util.Info("Send WILL '" + value + "' (echo)");
+                    sQ.push(255, 251, value);
+                } else if (value === 24) {
                     // Terminal type
                     Util.Info("Send WILL '" + value + "' (TERM-TYPE)");
                     sQ.push(255, 251, value);
                 } else {
                     // Refuse other DO requests with a WONT
-                    Util.Debug("Send WONT '" + value + "'");
+                    Util.Info("Send WONT '" + value + "'");
                     sQ.push(255, 252, value);
                 }
                 break;
             case 252: // WONT
-                Util.Debug("Got Cmd WONT '" + value + "', ignoring");
+                if (value === 1) {
+                    tansi.echo();
+                    Util.Info("Send WILL '" + value + "' (echo)");
+                    sQ.push(255, 251, value);
+                }
+                else
+                    Util.Info("Got Cmd WONT '" + value + "', ignoring");
                 break;
             case 251: // WILL
-                Util.Debug("Got Cmd WILL '" + value + "'");
+                Util.Info("Got Cmd WILL '" + value + "'");
                 if (value === 1) {
                     // Server will echo, turn off local echo
-                    vt100.noecho();
+                    tansi.noecho();
                     // Affirm echo with DO
                     Util.Info("Send Cmd DO '" + value + "' (echo)");
                     sQ.push(255, 253, value);
                 } else {
                     // Reject other WILL offers with a DONT
-                    Util.Debug("Send Cmd DONT '" + value + "'");
+                    Util.Info("Send Cmd DONT '" + value + "'");
                     sQ.push(255, 254, value);
                 }
                 break;
@@ -136,7 +150,7 @@ function do_recv() {
     }
 
     if (str) {
-        vt100.write(str);
+        tansi.write(str);
     }
 
     //console.log("<< do_recv");
@@ -175,7 +189,7 @@ that.disconnect = function() {
     if (ws) {
         ws.close();
     }
-    vt100.curs_set(true, false);
+    tansi.curs_set(true, false);
 
     disconnect_callback();
     Util.Debug("<< disconnect");
@@ -189,7 +203,7 @@ function constructor() {
     ws.on('message', do_recv);
     ws.on('open', function(e) {
         Util.Info(">> WebSockets.onopen");
-        vt100.curs_set(true, true);
+        tansi.curs_set(true, true);
         connect_callback();
         Util.Info("<< WebSockets.onopen");
     });
@@ -206,15 +220,15 @@ function constructor() {
 
     /* Initialize the terminal emulator/renderer */
 
-    vt100 = new VT100(80, 24, target);
+    tansi = new TANSI(80, 36, target);
 
 
     /*
-     * Override VT100 I/O routines
+     * Override tansi I/O routines
      */
 
     // Set handler for sending characters
-    vt100.getch(
+    tansi.setISR(
         function send_chr(chr, vt) {
             var i;
             Util.Debug(">> send_chr: " + chr);
@@ -222,68 +236,50 @@ function constructor() {
                 sQ.push(chr.charCodeAt(i));
             }
             do_send();
-            vt100.getch(send_chr);
         }
     );
 
-    vt100.debug = function(message) {
-        Util.Debug(message + "\n");
-    }
-
-    vt100.warn = function(message) {
-        Util.Warn(message + "\n");
-    }
-
-    vt100.curs_set = function(vis, grab, eventist)
+    tansi.curs_set = function(vis, grab, eventist)
     {
-        this.debug("curs_set:: vis: " + vis + ", grab: " + grab);
         if (vis !== undefined)
-            this.cursor_vis_ = (vis > 0);
+            this.cursor(vis);
         if (eventist === undefined)
             eventist = window;
         if (grab === true || grab === false) {
             if (grab === this.grab_events_)
                 return;
             if (grab) {
-                this.grab_events_ = true;
-                VT100.the_vt_ = this;
-                Util.addEvent(eventist, 'keydown', vt100.key_down);
-                Util.addEvent(eventist, 'keyup', vt100.key_up);
+                this._greedy = true;
+                Util.addEvent(eventist, 'keypress', tansi.key_press);
+                Util.addEvent(eventist, 'keydown', tansi.key_down);
+                Util.addEvent(eventist, 'keyup', tansi.key_up);
             } else {
-                Util.removeEvent(eventist, 'keydown', vt100.key_down);
-                Util.removeEvent(eventist, 'keyup', vt100.key_up);
-                this.grab_events_ = false;
-                VT100.the_vt_ = undefined;
+                Util.removeEvent(eventist, 'keypress', tansi.key_press);
+                Util.removeEvent(eventist, 'keydown', tansi.key_down);
+                Util.removeEvent(eventist, 'keyup', tansi.key_up);
+                this._greedy = false;
             }
         }
     }
 
-    vt100.key_down = function(e) {
-        var vt = VT100.the_vt_, keysym, ch, str = "";
-
-        if (vt === undefined)
+    tansi.key_press = function(e) {
+        var str = String.fromCharCode(e.charCode);
+        if (!tansi._greedy)
             return true;
+        if (str)
+            tansi.addCharToBuf(str);
+        Util.stopEvent(e);
+        return false;
+    }
 
+    tansi.key_down = function(e) {
+        var keysym, ch, str = "";
+        if (!tansi._greedy)
+            return true;
         keysym = getKeysym(e);
 
         if (keysym < 128) {
-            if (e.ctrlKey) {
-                if (keysym == 64) {
-                    // control 0
-                    ch = 0;
-                } else if ((keysym >= 97) && (keysym <= 122)) {
-                    // control codes 1-26
-                    ch = keysym - 96;
-                } else if ((keysym >= 91) && (keysym <= 95)) {
-                    // control codes 27-31
-                    ch = keysym - 64;
-                } else {
-                    Util.Info("Debug unknown control keysym: " + keysym);
-                }
-            } else {
-                ch = keysym;
-            }
-            str = String.fromCharCode(ch);
+            return 0;
         } else {
             switch (keysym) {
             case 65505: // Shift, do not send directly
@@ -309,18 +305,15 @@ function constructor() {
             }
         }
 
-        if (str) {
-            vt.key_buf_.push(str);
-            setTimeout(VT100.go_getch_, 0);
-        }
+        if (str)
+            tansi.addCharToBuf(str);
 
         Util.stopEvent(e);
         return false;
     }
 
-    vt100.key_up = function(e) {
-        var vt = VT100.the_vt_;
-        if (vt === undefined)
+    tansi.key_up = function(e) {
+        if (!tansi._greedy)
             return true;
         Util.stopEvent(e);
         return false;
