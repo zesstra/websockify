@@ -2,7 +2,7 @@
 // extravagant features (set cursor to certain locations, f.e.), but which
 // provides scrollback, command history and a separate command line.
 // 
-// Written by XRM@github.com / YEN@nightfall.org 19jun13
+// Written by XRM from github.com / YEN from nightfall.org 19jun13
 // Bases on VT100.js by Frank Bi <bi@zompower.tk>
 
 function TANSI (width, height, targetId)
