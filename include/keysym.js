@@ -96,3 +96,4 @@ function getKeysym(e) {
 
     return keysym;
 }
+
