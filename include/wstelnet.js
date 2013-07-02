@@ -20,7 +20,7 @@
  * Other web consoles:
  *   http://stackoverflow.com/questions/244750/ajax-console-window-with-ansi-vt100-support
  *
- * This version has been slightly adjusted by XRM@github / YEN@nightfall (17jun13).
+ * This version has been slightly adjusted by XRM from github.com / YEN from nightfall.org (17jun13).
  * (Made echo on-off-switchable, changed to ansi and using keypress instead of the key-map)
  * (Also adjusted code to use TANSI.js instead of VT100.js)
  */

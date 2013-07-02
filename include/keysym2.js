@@ -3,7 +3,7 @@
  * Copyright (C) 2010 Joel Martin
  * Licensed under LGPL-3 (see LICENSE.txt)
  *
- * Adjusted by XRM@github / YEN@nightfall on 19jun13
+ * Adjusted by XRM from github.com / YEN from nightfall.org on 19jun13
  * to using onkeydown *and* onkeypressed.
  * 
  */
