@@ -58,9 +58,9 @@
                 $D('connectButton').disabled = false;
                 $D('connectButton').value = "Connect";
                 $D('connectButton').onclick = connect;
-                var lines = document.getElementById("terminal").innerHTML.split("\n");
+                var lines = document.getElementById("terminal").lastChild.innerHTML.split("\n");
                 lines.pop();
-                document.getElementById("terminal").innerHTML =  lines.join("\n") + "\n<span style='font-style: italic; color: #00FF00;'>Disconnected.</span><br>";
+                document.getElementById("terminal").lastChild.innerHTML =  lines.join("\n") + "\n<span style='font-style: italic; color: #00FF00;'>Disconnected.</span><br>";
             }
 
             window.onload = function() {
