@@ -3,11 +3,6 @@
  * Copyright (C) 2011 Joel Martin
  * Licensed under LGPL-3 (see LICENSE.txt)
  *
- * Included VT100.js from:
- *   http://code.google.com/p/sshconsole
- * Which was modified from:
- *   http://fzort.org/bi/o.php#vt100_js
- *
  * Telnet protocol:
  *   http://www.networksorcery.com/enp/protocol/telnet.htm
  *   http://www.networksorcery.com/enp/rfc/rfc1091.txt
@@ -278,7 +273,7 @@ function constructor() {
             return true;
         keysym = getKeysym(e);
 
-        if (keysym < 128) {
+        if (keysym < 250) {
             return 0;
         } else {
             switch (keysym) {
