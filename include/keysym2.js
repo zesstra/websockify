@@ -20,12 +20,7 @@ function getKeysym(e) {
         case 13        : keysym = 0xFF0D; break; // ENTER
         case 27        : keysym = 0xFF1B; break; // ESCAPE
         case 45        : keysym = 0xFF63; break; // INSERT
-        case 46        : keysym = 0xFFFF; break; // DELETE
-        case 36        : keysym = 0xFF50; break; // HOME
-        case 35        : keysym = 0xFF57; break; // END
-        case 37        : keysym = 0xFF51; break; // LEFT
         case 38        : keysym = 0xFF52; break; // UP
-        case 39        : keysym = 0xFF53; break; // RIGHT
         case 40        : keysym = 0xFF54; break; // DOWN
         case 112       : keysym = 0xFFBE; break; // F1
         case 113       : keysym = 0xFFBF; break; // F2
@@ -40,6 +35,7 @@ function getKeysym(e) {
         case 16        : keysym = 0xFFE1; break; // SHIFT
         case 17        : keysym = 0xFFE3; break; // CONTROL
         case 18        : keysym = 0xFFE9; break; // Left ALT (Mac Command)
+        case 67        : if (!!evt.ctrlKey || !!evt.metaKey) { keysym = 0xFFEA; break; } // CTRL+C (copy-command)
         default        : keysym = evt.keyCode; break;
     } 
     return keysym;

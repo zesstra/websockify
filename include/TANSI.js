@@ -5,26 +5,25 @@
 // Written by XRM from github.com / YEN from nightfall.org 19jun13
 // Bases on VT100.js by Frank Bi <bi@zompower.tk>
 
-function TANSI (width, height, targetId)
+function TANSI (width, height, targetId, inputId, promptId)
 {
   this._width  = width;
   this._height = height;
   this._target = document.getElementById(targetId);
+  this._input = document.getElementById(inputId);
+  this._prompt = document.getElementById(promptId);
   this._defaultForeground = 7;
   this._defaultBackground = 0;
   this._state  = [this._defaultForeground, this._defaultBackground, 0];  // Foreground, Background, Mode
-  this._cursor = 1;  // cursor visible
   this._greedy = 1;  // grab inputs per default
   this._echo   = 1;  // echo input
-  this._buffer = "> ";  // input line
-  this._bufferPos = 0;  // Position in buffer
-  this._lastBufferPos = 0;  // Position in buffer after last refresh
+  this._buffer = "";  // input line
   this._lineCounter = 0;  // no lines stored yet
   this._isr = undefined;
   this._history = [];
   this._lastLineLength = 0;
   this._target.innerHTML = "";
-  this.showBuffer(1);
+  this.showBuffer();
   this._firstTag = 1;
   this._noLastSpan = 1;
   this._lastSpan = "";
@@ -40,10 +39,10 @@ TANSI.INVERSE = 8;
 TANSI.prototype.setPageSize = function ()
 {
   // This may break if the last line consists of too many chars ...
-  var s = this._target.lastChild.lastChild;
+  var s = this._prompt;
   var l = s.innerText.length;
-  this._width = Math.floor(this._target.clientWidth / (s.offsetWidth / l));
-  this._height = Math.floor(this._target.clientHeight / s.offsetHeight) - 2;
+  this._width = Math.floor(this._target.clientWidth / (s.offsetWidth / l)) - 1;
+  this._height = Math.floor(this._target.clientHeight / s.offsetHeight);
   // If width or length drops below a certain min, reset to default.
   if (this._width < 40)
     this._width = 80;
@@ -53,7 +52,7 @@ TANSI.prototype.setPageSize = function ()
   var h = this._height;
   var r = new Array;
   r.push(w); r.push(h);
-  this.showBuffer();
+  this.showBuffer(1);
   return r;
 }
 
@@ -202,10 +201,8 @@ TANSI.prototype.addText = function (str, fromBuffer)
   }
   if (!this._noLastSpan)
     ret += "</span>";
-  if (fromBuffer === undefined)
-    this._lastLineLength = ret.split("\n").pop().replace(/(<([^>]+)>)/ig,"").replace(/&gt;/g,">").replace(/&lt;/g,"<").replace(/&amp;/g,"&").length;
+  this._lastLineLength = ret.split("\n").pop().replace(/(<([^>]+)>)/ig,"").replace(/&gt;/g,">").replace(/&lt;/g,"<").replace(/&amp;/g,"&").length;
   this._lineCounter += ret.split("\n").length - 1;
-  this._target.removeChild(this._target.lastChild);
   var span = document.createElement("span");
   span.innerHTML = ret;
   while (span.firstChild)
@@ -238,30 +235,25 @@ TANSI.prototype.write = function(str)
   this.addText(t);
 }
 
-TANSI.prototype.addCharToBuf = function (str)
+TANSI.prototype.controlBuffer = function (str)
 {
   if (!this._greedy)
     return;
   if (str.charCodeAt(0) == 10)
   {
-    this._buffer = this._buffer.substr(2);
-    if (this._isr !== undefined)
-      this._isr(this._buffer+"\n");
     if (this._echo)
     {
       this.addText(this._buffer + "\n", 1);
       if (this._history[this._history.length - 1] != this._buffer)
         this._history.push(this._buffer);
     }
-    this._lastBufferPos = this._bufferPos;
-    this._bufferPos = 0;
+    if (this._isr !== undefined)
+      this._isr(this._buffer+"\n");
     this._historyPos = -1;
     this.clearBuf();
   }
   else if (str.charCodeAt(0) == 8)
   {
-    this._lastBufferPos = this._bufferPos;
-    this._bufferPos = 0;
     this.eraseLastCharFromBuf();
   }
   else if (str.charCodeAt(0) == 27 && str.charCodeAt(1) == 91)
@@ -270,38 +262,15 @@ TANSI.prototype.addCharToBuf = function (str)
       this._historyPos++;
     else if (str[2] == "B")
       this._historyPos--;
-    else
-    {
-      this._lastBufferPos = this._bufferPos;
-      if (str[2] == "C")
-        this._bufferPos--;
-      if (str[2] == "D")
-        this._bufferPos++;
-      if (this._bufferPos > (this._buffer.length - this._width))
-        this._bufferPos = this._buffer.length - this._width;
-      if (this._bufferPos < 0)
-        this._bufferPos = 0;
-      this.showBuffer();
-      return;
-    }
-    this._lastBufferPos = this._bufferPos;
-    this._bufferPos = 0;
+
     if (this._historyPos < 0)
       this._historyPos = -1;
     if (this._historyPos >= this._history.length)
       this._historyPos = this._history.length - 1;
-    if (this._historyPos == -1)
-      this._buffer = "> ";
+    if (this._history.length == 0 || this._historyPos == -1)
+      this._buffer = "";
     else
-      this._buffer = "> " + this._history[this._history.length - 1 - this._historyPos];
-  }
-  else
-  {
-    if (str.charCodeAt(0) == 0)
-      return;
-    this._buffer += str;
-    this._lastBufferPos = this._bufferPos;
-    this._bufferPos = 0;
+      this._buffer = "" + this._history[this._history.length - 1 - this._historyPos];
   }
   if (this._echo)
     this.showBuffer();
@@ -309,62 +278,52 @@ TANSI.prototype.addCharToBuf = function (str)
 
 TANSI.prototype.eraseLastCharFromBuf = function ()
 {
-  if (!this._greedy)
+  if (!this._greedy || this._echo)
     return;
   if (this._buffer.length > 2)
     this._buffer = this._buffer.substr(0, this._buffer.length - 1);
   else
-    this._buffer = "> ";
-  this._lastBufferPos = this._bufferPos;
-  this._bufferPos = 0;
+    this._buffer = "";
   if (this._echo)
     this.showBuffer();
 }
 
 TANSI.prototype.clearBuf = function (str)
 {
-  this._buffer = "> ";
-  this._lastBufferPos = this._bufferPos;
-  this._bufferPos = 0;
+  this._buffer = "";
 }
 
-TANSI.prototype.showBuffer = function (noRecalc)
+TANSI.prototype.updateBuffer = function ()
 {
-  var pos = this._buffer.length - this._width - this._bufferPos;
-  if (pos < 0)
-    pos = 0;
-  if (this._buffer.length <= this._width)
-    var b = this._buffer.substr(pos, this._buffer.length);
+  if (this._input === undefined)
+    return;
+  if (this._echo)
+    this._buffer = this._input.value;
   else
-    var b = this._buffer.substr(pos, this._width);
-  var bl = b.length;
-  if (this._cursor && this._bufferPos == 0)
-    b += "<span style=\"text-decoration: blink;\">_</span>";
-  else
-    b += "<span style=\"text-decoration: blink;\">&nbsp;</span>";
-  var div = document.createElement("div");
-  div.innerHTML = "--------------------------------------------------------------------------------\n" + b;
-  if (!noRecalc)
-    this._target.replaceChild(div, this._target.lastChild);
-  else
-    this._target.appendChild(div);
+  {
+    this._buffer += this._input.value;
+    this._input.value = "";
+  }
+}
+
+TANSI.prototype.showBuffer = function (noUpdate)
+{
+  this._input.size = this._width - 6;
+  if (this._input.value != this._buffer && !noUpdate)
+    this._input.value = this._buffer;
   window.scrollTo(0, document.body.scrollHeight);
 }
 
 TANSI.prototype.noecho = function ()
 {
   this._echo = 0;
+  this._input.type = "password";
 }
 
 TANSI.prototype.echo = function ()
 {
   this._echo = 1;
-}
-
-TANSI.prototype.cursor = function (visible)
-{
-  this._cursor = visible>0?1:0;
-  this.showBuffer();
+  this._input.type = "text";
 }
 
 TANSI.prototype.setISR = function (isr)

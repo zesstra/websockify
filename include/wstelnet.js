@@ -25,12 +25,12 @@
  * (Also adjusted code to use TANSI.js instead of VT100.js)
  */
 
-function Telnet(target, connect_callback, disconnect_callback) {
+function Telnet(target, connect_callback, disconnect_callback, input, prompt) {
 
 var that = {},  // Public API interface
     tansi, ws, sQ = [],
     termType = "ANSI",
-    _naws = 0;
+    _naws, interval = 0;
 
 
 Array.prototype.pushStr = function (str) {
@@ -214,7 +214,7 @@ that.disconnect = function() {
     if (ws) {
         ws.close();
     }
-    tansi.curs_set(true, false);
+    tansi.curs_set(false);
 
     disconnect_callback();
     Util.Debug("<< disconnect");
@@ -231,7 +231,7 @@ function constructor() {
     ws.on('message', do_recv);
     ws.on('open', function(e) {
         Util.Info(">> WebSockets.onopen");
-        tansi.curs_set(true, true);
+        tansi.curs_set(true);
         connect_callback();
         Util.Info("<< WebSockets.onopen");
     });
@@ -248,7 +248,7 @@ function constructor() {
 
     /* Initialize the terminal emulator/renderer */
 
-    tansi = new TANSI(80, 36, target);
+    tansi = new TANSI(80, 36, target, input, prompt);
 
 
     /*
@@ -267,10 +267,8 @@ function constructor() {
         }
     );
 
-    tansi.curs_set = function(vis, grab, eventist)
+    tansi.curs_set = function(grab, eventist)
     {
-        if (vis !== undefined)
-            this.cursor(vis);
         if (eventist === undefined)
             eventist = window;
         if (grab === true || grab === false) {
@@ -278,26 +276,17 @@ function constructor() {
                 return;
             if (grab) {
                 this._greedy = true;
-                Util.addEvent(eventist, 'keypress', tansi.key_press);
                 Util.addEvent(eventist, 'keydown', tansi.key_down);
                 Util.addEvent(eventist, 'keyup', tansi.key_up);
+                window.clearInterval(interval);
+                interval = window.setInterval(function() { tansi.updateBuffer(); }, 50);
             } else {
-                Util.removeEvent(eventist, 'keypress', tansi.key_press);
                 Util.removeEvent(eventist, 'keydown', tansi.key_down);
                 Util.removeEvent(eventist, 'keyup', tansi.key_up);
+                window.clearInterval(interval);
                 this._greedy = false;
             }
         }
-    }
-
-    tansi.key_press = function(e) {
-        var str = String.fromCharCode(e.charCode);
-        if (!tansi._greedy)
-            return true;
-        if (str)
-            tansi.addCharToBuf(str);
-        Util.stopEvent(e);
-        return false;
     }
 
     tansi.key_down = function(e) {
@@ -305,8 +294,12 @@ function constructor() {
         if (!tansi._greedy)
             return true;
         keysym = getKeysym(e);
-
+        // We allow ctrl/cmd+c
+        if (keysym == 65514)
+            return 0;
+        // Normal keys, cursor right/left, pos1 / end, del
         if (keysym < 250) {
+            tansi._input.focus();
             return 0;
         } else {
             switch (keysym) {
@@ -320,12 +313,8 @@ function constructor() {
                 str = '\b'; break;
             case 65307: // Escape
                 str = '\x1b'; break;
-            case 65361: // Left arrow 
-                str = '\x1b[D'; break;
             case 65362: // Up arrow 
                 str = '\x1b[A'; break;
-            case 65363: // Right arrow 
-                str = '\x1b[C'; break;
             case 65364: // Down arrow 
                 str = '\x1b[B'; break;
             default:
@@ -333,11 +322,13 @@ function constructor() {
             }
         }
 
-        if (str)
-            tansi.addCharToBuf(str);
-
-        Util.stopEvent(e);
-        return false;
+        if (str && str != '\x1b')
+            tansi.controlBuffer(str);
+        if (str != '\b')
+        {
+            Util.stopEvent(e);
+            return false;
+        }
     }
 
     tansi.key_up = function(e) {

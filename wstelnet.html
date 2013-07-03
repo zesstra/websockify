@@ -18,18 +18,22 @@
 
     </head>
 
-    <body style="background-color: #1D1D1D; height: 97%; width: 97%;">
-        <noscript style="color: #ff0000; font-family: monospace;">Please enable Javascript.</noscript>
+    <body style="background-color: #1D1D1D; color: #C0C0C0; height: 97%; width: 97%; font-family: monospace; min-width: 700px;">
+        <noscript style="color: #ff0000;">Please enable Javascript.</noscript>
+        <div style="height: 100%; width: 100%; margin: 0 auto; color: #C0C0C0; background-color: #1D1D1D;">
+            Host: <input id='host' style='width:100'>&nbsp;
+            Port: <input id='port' style='width:50'>&nbsp;
+            Encrypt: <input id='encrypt' type='checkbox'>&nbsp;
+            <input id='connectButton' type='button' value='Connect' style='width:100px' onclick="connect();">&nbsp;
 
-        Host: <input id='host' style='width:100'>&nbsp;
-        Port: <input id='port' style='width:50'>&nbsp;
-        Encrypt: <input id='encrypt' type='checkbox'>&nbsp;
-        <input id='connectButton' type='button' value='Connect' style='width:100px'
-            onclick="connect();">&nbsp;
+            <br><br>
 
-        <br><br>
-
-        <pre id="terminal" style="height: 100%; width: 100%; margin: 0 auto; color: #C0C0C0; background-color: #1D1D1D;"></pre>
+            <pre id="terminal" style="height: auto; width: 100%; margin: 0 auto; font-size: 1em;"></pre>
+            <hr style="border: 0; border-bottom: 1px dashed #C0C0C0;"/>
+            <div id="cmd" style="background: 0; border: 0; color: #C0C0C0; outline: 0; font-family: monospace; font-size: 1em;">
+                <span id="prompt">&gt;</span> <input type="text" name="i" id="cmdline" style="font-size: 1em; background: 0; border: 0; color: #C0C0C0; outline: 0; font-family: monospace;"/>
+            </div>
+        </div>
 
         <script>
             var telnet;
@@ -58,9 +62,7 @@
                 $D('connectButton').disabled = false;
                 $D('connectButton').value = "Connect";
                 $D('connectButton').onclick = connect;
-                var lines = document.getElementById("terminal").lastChild.innerHTML.split("\n");
-                lines.pop();
-                document.getElementById("terminal").lastChild.innerHTML =  lines.join("\n") + "\n<span style='font-style: italic; color: #00FF00;'>Disconnected.</span><br>";
+                document.getElementById("cmd").innerHTML = "<span style='font-style: italic; color: #00FF00;'>Disconnected.</span><br>";
             }
 
             window.onload = function() {
@@ -69,7 +71,7 @@
                 $D('host').value = (url.match(/host=([^&#]*)/) || ['',''])[1];
                 $D('port').value = (url.match(/port=([^&#]*)/) || ['',''])[1];
                 
-                telnet = Telnet('terminal', connected, disconnected);
+                telnet = Telnet('terminal', connected, disconnected, 'cmdline', 'prompt');
             }
 
             window.onresize = function(event) {
