@@ -40,7 +40,21 @@ TANSI.prototype.setPageSize = function ()
 {
   // This may break if the last line consists of too many chars ...
   var s = this._prompt;
-  var l = s.innerText.length;
+  var r = new Array;
+  var i = 0;
+  r.push(80); r.push(24);
+  if (s.textContent === undefined)
+  {
+    if (s.innerHTML === undefined)
+      return r;
+    else
+      i = 1;
+  }
+  var l = 0;
+  if (i)
+    l = s.innerText.length;
+  else
+    l = s.textContent.length;
   this._width = Math.floor(this._target.clientWidth / (s.offsetWidth / l)) - 1;
   this._height = Math.floor(this._target.clientHeight / s.offsetHeight);
   // If width or length drops below a certain min, reset to default.
@@ -50,8 +64,7 @@ TANSI.prototype.setPageSize = function ()
     this._height = 24;
   var w = this._width;
   var h = this._height;
-  var r = new Array;
-  r.push(w); r.push(h);
+  r[0] = w; r[1] = h;
   this.showBuffer(1);
   return r;
 }
