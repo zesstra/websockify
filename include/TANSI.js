@@ -1,4 +1,4 @@
-  // TANSI.js -- a telnet-ansi-replacement for VT100 which drops some of the
+// TANSI.js -- a telnet-ansi-replacement for VT100 which drops some of the
 // extravagant features (set cursor to certain locations, f.e.), but which
 // provides scrollback, command history and a separate command line.
 // 
