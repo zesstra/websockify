@@ -21,15 +21,16 @@
  *   http://stackoverflow.com/questions/244750/ajax-console-window-with-ansi-vt100-support
  *
  * This version has been slightly adjusted by XRM from github.com / YEN from nightfall.org (17jun13).
- * (Made echo on-off-switchable, changed to ansi and using keypress instead of the key-map)
+ * (Made echo on-off-switchable, changed to ansi and using keypress instead of the key-map, added setPageSize)
  * (Also adjusted code to use TANSI.js instead of VT100.js)
  */
 
 function Telnet(target, connect_callback, disconnect_callback) {
 
 var that = {},  // Public API interface
-    tansi, ws, sQ = [];
-    termType = "ANSI";
+    tansi, ws, sQ = [],
+    termType = "ANSI",
+    _naws = 0;
 
 
 Array.prototype.pushStr = function (str) {
@@ -37,6 +38,29 @@ Array.prototype.pushStr = function (str) {
     for (var i=0; i < n; i++) {
         this.push(str.charCodeAt(i));
     }
+}
+
+function setPageSize(noSend) {
+    if (!_naws)
+        return;
+    var size = tansi.setPageSize();
+    var w0 = size[0] / 256;
+    var w1 = size[0] % 256;
+    var h0 = size[1] / 256;
+    var h1 = size[1] % 256;
+    sQ.push(255, 250, 31);
+    // Any occurence of 255 must be escaped by sending it twice.
+    sQ.push(w0);
+    if (w0 == 255) sQ.push(w0);
+    sQ.push(w1);
+    if (w1 == 255) sQ.push(w1);
+    sQ.push(h0);
+    if (h0 == 255) sQ.push(h0);
+    sQ.push(h1);
+    if (h1 == 255) sQ.push(h1);
+    sQ.push(255, 240); 
+    if (noSend === undefined || noSend != 1)
+        do_send();
 }
 
 function do_send() {
@@ -77,6 +101,12 @@ function do_recv() {
                     // Terminal type
                     Util.Info("Send WILL '" + value + "' (TERM-TYPE)");
                     sQ.push(255, 251, value);
+                } else if (value === 31) {
+                    // NAWS
+                    Util.Info("Send WILL '" + value + "' (NAWS)");
+                    _naws = 1;
+                    sQ.push(255, 251, value);
+                    that.setPageSize(1);
                 } else {
                     // Refuse other DO requests with a WONT
                     Util.Info("Send WONT '" + value + "'");
@@ -190,6 +220,9 @@ that.disconnect = function() {
     Util.Debug("<< disconnect");
 }
 
+that.setPageSize = function() {
+    setPageSize();
+}
 
 function constructor() {
     /* Initialize Websock object */

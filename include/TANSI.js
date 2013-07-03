@@ -1,4 +1,4 @@
-// TANSI.js -- a telnet-ansi-replacement for VT100 which drops some of the
+  // TANSI.js -- a telnet-ansi-replacement for VT100 which drops some of the
 // extravagant features (set cursor to certain locations, f.e.), but which
 // provides scrollback, command history and a separate command line.
 // 
@@ -21,22 +21,41 @@ function TANSI (width, height, targetId)
   this._lastBufferPos = 0;  // Position in buffer after last refresh
   this._lineCounter = 0;  // no lines stored yet
   this._isr = undefined;
-  this._output = "";
-  this._input = "";
   this._history = [];
   this._lastLineLength = 0;
-  this._target.innerHTML = this._output = this.stateToSpan(this._state, 1);
+  this._target.innerHTML = "";
   this.showBuffer(1);
   this._firstTag = 1;
   this._noLastSpan = 1;
   this._lastSpan = "";
   this._codeFragment = "";
+  this._margin = 2;  // Used to work around unneccessary line breaks due to the prompt in muds
 }
 
 TANSI.BOLD = 1;
 TANSI.UNDERLINE = 2;
 TANSI.BLINK = 4;
 TANSI.INVERSE = 8;
+
+TANSI.prototype.setPageSize = function ()
+{
+  // This may break if the last line consists of too many chars ...
+  var s = this._target.lastChild.lastChild;
+  var l = s.innerText.length;
+  this._width = Math.floor(this._target.clientWidth / (s.offsetWidth / l));
+  this._height = Math.floor(this._target.clientHeight / s.offsetHeight) - 2;
+  // If width or length drops below a certain min, reset to default.
+  if (this._width < 40)
+    this._width = 80;
+  if (this._height < 3)
+    this._height = 24;
+  var w = this._width;
+  var h = this._height;
+  var r = new Array;
+  r.push(w); r.push(h);
+  this.showBuffer();
+  return r;
+}
 
 TANSI.prototype.numToCol = function (num, bold)
 {
@@ -88,6 +107,7 @@ TANSI.prototype.addText = function (str, fromBuffer)
   var i = 0;
   var j = 0;
   var k = 0;
+  var firstLine = 1;
   var length = this._lastLineLength;
   var code = "";
   str = this._codeFragment + str;
@@ -102,7 +122,10 @@ TANSI.prototype.addText = function (str, fromBuffer)
         continue;
       }
       if (str.charCodeAt(i) == 10)
+      {
+        firstLine = 0;
         length = 0;
+      }
       else
         length++;
       if (str[i] == "<")
@@ -114,8 +137,10 @@ TANSI.prototype.addText = function (str, fromBuffer)
       else
         ret += str[i];
       i++;
-      if (length == 82)
+      // margin is used to allow (theoretically) too long lines due to the prompt
+      if (length == (this._width + (firstLine?this._margin:0)))
       {
+        firstLine = 0;
         ret += "\n";
         length = 0;
       }
@@ -181,14 +206,14 @@ TANSI.prototype.addText = function (str, fromBuffer)
     this._lastLineLength = ret.split("\n").pop().replace(/(<([^>]+)>)/ig,"").replace(/&gt;/g,">").replace(/&lt;/g,"<").replace(/&amp;/g,"&").length;
   this._lineCounter += ret.split("\n").length - 1;
   this._target.removeChild(this._target.lastChild);
-  var div = document.createElement("div");
-  div.innerHTML = ret;
-  while (div.firstChild)
+  var span = document.createElement("span");
+  span.innerHTML = ret;
+  while (span.firstChild)
   {
-    if (div.firstChild.innerHTML == "")
-      div.removeChild(div.firstChild);
+    if (span.firstChild.innerHTML == "")
+      span.removeChild(span.firstChild);
     else
-      this._target.appendChild(div.firstChild);
+      this._target.appendChild(span.firstChild);
   }
   this.showBuffer(1);
   document.title = "Nightfall Webclient (" + this._lineCounter + " lines)"
@@ -252,8 +277,8 @@ TANSI.prototype.addCharToBuf = function (str)
         this._bufferPos--;
       if (str[2] == "D")
         this._bufferPos++;
-      if (this._bufferPos > (this._buffer.length - 80))
-        this._bufferPos = this._buffer.length - 80;
+      if (this._bufferPos > (this._buffer.length - this._width))
+        this._bufferPos = this._buffer.length - this._width;
       if (this._bufferPos < 0)
         this._bufferPos = 0;
       this.showBuffer();
@@ -305,18 +330,20 @@ TANSI.prototype.clearBuf = function (str)
 
 TANSI.prototype.showBuffer = function (noRecalc)
 {
-  var pos = this._buffer.length - 80 - this._bufferPos;
+  var pos = this._buffer.length - this._width - this._bufferPos;
   if (pos < 0)
     pos = 0;
-  if (this._buffer.length <= 80)
+  if (this._buffer.length <= this._width)
     var b = this._buffer.substr(pos, this._buffer.length);
   else
-    var b = this._buffer.substr(pos, 80);
+    var b = this._buffer.substr(pos, this._width);
   var bl = b.length;
   if (this._cursor && this._bufferPos == 0)
     b += "<span style=\"text-decoration: blink;\">_</span>";
+  else
+    b += "<span style=\"text-decoration: blink;\">&nbsp;</span>";
   var div = document.createElement("div");
-  div.innerHTML = "\n--------------------------------------------------------------------------------\n" + b;
+  div.innerHTML = "--------------------------------------------------------------------------------\n" + b;
   if (!noRecalc)
     this._target.replaceChild(div, this._target.lastChild);
   else
