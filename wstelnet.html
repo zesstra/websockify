@@ -1,6 +1,7 @@
-<html>
-
+<!DOCTYPE HTML>
+<html lang="en" style="padding: 5px;">
     <head>
+        <meta charset="ISO-8859-1">
         <title>Telnet client using WebSockets</title>
         <script src="include/base64.js"></script>
         <script src="include/util.js"></script>
@@ -14,11 +15,8 @@
         <script type='text/javascript' 
             src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
         -->
-
-
     </head>
-
-    <body style="background-color: #1D1D1D; color: #C0C0C0; height: 97%; width: 97%; font-family: monospace; min-width: 700px;">
+    <body style="background-color: #1D1D1D; color: #C0C0C0; height: 100%; width: 100%; font-family: monospace; min-width: 700px; margin: 0; padding: 0;">
         <noscript style="color: #ff0000;">Please enable Javascript.</noscript>
         <div style="height: 100%; width: 100%; margin: 0 auto; color: #C0C0C0; background-color: #1D1D1D;">
             Host: <input id='host' style='width:100'>&nbsp;
@@ -30,7 +28,7 @@
 
             <pre id="terminal" style="height: auto; width: 100%; margin: 0 auto; font-size: 1em;"></pre>
             <hr style="border: 0; border-bottom: 1px dashed #C0C0C0;"/>
-            <div id="cmd" style="background: 0; border: 0; color: #C0C0C0; outline: 0; font-family: monospace; font-size: 1em;">
+            <div id="cmd" style="background: 0; border: 0; color: #C0C0C0; outline: 0; width: 100%; font-family: monospace; font-size: 1em;">
                 <span id="prompt">&gt;</span> <input type="text" name="i" id="cmdline" style="font-size: 1em; background: 0; border: 0; color: #C0C0C0; outline: 0; font-family: monospace;"/>
             </div>
         </div>
@@ -82,7 +80,5 @@
                 }
             }
         </script>
-
     </body>
-
 </html>
