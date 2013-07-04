@@ -252,6 +252,7 @@ TANSI.prototype.controlBuffer = function (str)
 {
   if (!this._greedy)
     return;
+  this.updateBuffer();
   if (str.charCodeAt(0) == 10)
   {
     if (this._echo)

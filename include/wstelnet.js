@@ -30,7 +30,7 @@ function Telnet(target, connect_callback, disconnect_callback, input, prompt) {
 var that = {},  // Public API interface
     tansi, ws, sQ = [],
     termType = "ANSI",
-    _naws, interval = 0;
+    _naws = 0;
 
 
 Array.prototype.pushStr = function (str) {
@@ -278,12 +278,9 @@ function constructor() {
                 this._greedy = true;
                 Util.addEvent(eventist, 'keydown', tansi.key_down);
                 Util.addEvent(eventist, 'keyup', tansi.key_up);
-                window.clearInterval(interval);
-                interval = window.setInterval(function() { tansi.updateBuffer(); }, 50);
             } else {
                 Util.removeEvent(eventist, 'keydown', tansi.key_down);
                 Util.removeEvent(eventist, 'keyup', tansi.key_up);
-                window.clearInterval(interval);
                 this._greedy = false;
             }
         }
@@ -334,6 +331,8 @@ function constructor() {
     tansi.key_up = function(e) {
         if (!tansi._greedy)
             return true;
+        if (!tansi._echo)
+            tansi.updateBuffer();
         Util.stopEvent(e);
         return false;
     }
