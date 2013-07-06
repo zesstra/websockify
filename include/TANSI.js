@@ -56,7 +56,7 @@ TANSI.prototype.setPageSize = function ()
   else
     l = s.textContent.length;
   this._width = Math.floor(this._target.clientWidth / (s.offsetWidth / l)) - 1;
-  this._height = Math.floor(this._target.clientHeight / s.offsetHeight);
+  this._height = Math.floor((window.innerHeight || document.documentElement.clientHeight) / s.offsetHeight - 4);
   // If width or length drops below a certain min, reset to default.
   if (this._width < 40)
     this._width = 80;
@@ -74,12 +74,12 @@ TANSI.prototype.numToCol = function (num, bold)
   switch (num)
   {
     case 0: return bold?"#808080":"#1D1D1D";  // BLACK
-    case 1: return bold?"#FF0000":"#800000";  // RED
-    case 2: return bold?"#00FF00":"#008000";  // GREEN
-    case 3: return bold?"#FFD700":"#808000";  // YELLOW
-    case 4: return bold?"#0000FF":"#000080";  // BLUE
-    case 5: return bold?"#FF00FF":"#800080";  // PURPLE
-    case 6: return bold?"#00FFFF":"#008080";  // CYAN
+    case 1: return bold?"#FF0000":"#B00000";  // RED
+    case 2: return bold?"#00FF00":"#00B000";  // GREEN
+    case 3: return bold?"#FFD700":"#B0B000";  // YELLOW
+    case 4: return bold?"#0000FF":"#0000B0";  // BLUE
+    case 5: return bold?"#FF00FF":"#B000B0";  // PURPLE
+    case 6: return bold?"#00FFFF":"#00B0B0";  // CYAN
     case 7: return bold?"#FFFFFF":"#C0C0C0";  // WHITE
   }
   return "";
