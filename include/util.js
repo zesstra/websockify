@@ -215,7 +215,7 @@ Util.conf_defaults = function(cfg, api, defaults, arr) {
 // itself is loaded via load_scripts. Once all scripts are loaded the
 // window.onscriptsloaded handler is called (if set).
 Util.get_include_uri = function() {
-    return (typeof INCLUDE_URI !== "undefined") ? INCLUDE_URI : "include/";
+    return (typeof INCLUDE_URI !== "undefined") ? INCLUDE_URI : "webclient/";
 }
 Util._loading_scripts = [];
 Util._pending_scripts = [];
@@ -305,6 +305,8 @@ Util.getEventPosition = function (e, obj, scale) {
 // Event registration. Based on: http://www.scottandrew.com/weblog/articles/cbs-events
 Util.addEvent = function (obj, evType, fn){
     if (obj.attachEvent){
+        if (obj == window)
+            obj = document;
         var r = obj.attachEvent("on"+evType, fn);
         return r;
     } else if (obj.addEventListener){
