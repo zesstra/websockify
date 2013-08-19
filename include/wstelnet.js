@@ -181,8 +181,6 @@ function do_recv() {
     //console.log("<< do_recv");
 }
 
-
-
 that.connect = function(host, port, encrypt) {
     var host = host,
         port = port,
@@ -267,25 +265,6 @@ function constructor() {
         }
     );
 
-    tansi.curs_set = function(grab, eventist)
-    {
-        if (eventist === undefined)
-            eventist = window;
-        if (grab === true || grab === false) {
-            if (grab === this.grab_events_)
-                return;
-            if (grab) {
-                this._greedy = true;
-                Util.addEvent(eventist, 'keydown', tansi.key_down);
-                Util.addEvent(eventist, 'keyup', tansi.key_up);
-            } else {
-                Util.removeEvent(eventist, 'keydown', tansi.key_down);
-                Util.removeEvent(eventist, 'keyup', tansi.key_up);
-                this._greedy = false;
-            }
-        }
-    }
-
     tansi.key_down = function(e) {
         var keysym, ch, str = "";
         if (!tansi._greedy)
@@ -337,6 +316,24 @@ function constructor() {
         return false;
     }
 
+    tansi.curs_set = function(grab, eventist)
+    {
+        if (eventist === undefined)
+            eventist = window;
+        if (grab === true || grab === false) {
+            if (grab === this._greedy)
+                return;
+            if (grab) {
+                this._greedy = true;
+                Util.addEvent(eventist, 'keydown', tansi.key_down);
+                Util.addEvent(eventist, 'keyup', tansi.key_up);
+            } else {
+                Util.removeEvent(eventist, 'keydown', tansi.key_down);
+                Util.removeEvent(eventist, 'keyup', tansi.key_up);
+                this._greedy = false;
+            }
+        }
+    }
 
     return that;
 }

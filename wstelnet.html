@@ -15,6 +15,19 @@
         <script type='text/javascript' 
             src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
         -->
+        <style type="text/css">
+        <!--
+            body {
+                font-family: Consolas,Monaco,Lucida Console,DejaVu Sans Mono,Courier New,monospace; background-color: #1D1D1D; color: #C0C0C0; height: 97%; width: 100%; min-width: 700px; margin: 0; padding: 0; font-size: 85%;
+            }
+            * {
+                font-family: Consolas,Monaco,Lucida Console,DejaVu Sans Mono,Courier New,monospace; font-size: 100%;
+            }
+            input {
+                background: 0; border: 0; color: #C0C0C0; outline: 0;
+            }
+        -->
+        </style>
     </head>
     <body style="background-color: #1D1D1D; color: #C0C0C0; height: 100%; width: 100%; font-family: monospace; min-width: 700px; margin: 0; padding: 0;">
         <noscript style="color: #ff0000;">Please enable Javascript.</noscript>
@@ -27,8 +40,8 @@
             <br><br>
             <pre id="terminal" style="height: auto; width: 100%; margin: 0 auto;"></pre>
             <hr style="border: 0; border-bottom: 1px dashed #C0C0C0;"/>
-            <div id="cmd" style="background: 0; border: 0; outline: 0; width: 100%;">
-                <span id="prompt">&gt;</span> <input type="text" name="i" id="cmdline" />
+            <div id="cmd" style="background: 0; outline: 0; width: 100%">
+                <div id="prompt" style="float: left;">&gt;&nbsp;</div><div style="margin-left: 1.2em;"><input type="text" name="i" id="cmdline" style="width: 100%; margin-top: 1px; background: 0; border: 0; outline: 0" /></div>
             </div>
         </div>
 
