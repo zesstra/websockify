@@ -116,8 +116,8 @@ function do_recv() {
             case 252: // WONT
                 if (value === 1) {
                     tansi.echo();
-                    Util.Info("Send WILL '" + value + "' (echo)");
-                    sQ.push(255, 251, value);
+                    Util.Info("Send DONT '" + value + "' (echo)");
+                    sQ.push(255, 254, value);
                 }
                 else
                     Util.Info("Got Cmd WONT '" + value + "', ignoring");
