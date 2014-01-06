@@ -80,6 +80,7 @@ class WebSocketRequestHandler(SimpleHTTPRequestHandler):
     * record: Record raw frame data as JavaScript array into specified filename
     * run_once: Handle a single request
     * handler_id: A sequence number for this connection, appended to record filename
+    * send_client_ip: Send client ip to target (in REMOTE_HOST=...)
     """
     buffer_size = 65536
 
@@ -104,6 +105,7 @@ class WebSocketRequestHandler(SimpleHTTPRequestHandler):
         self.handler_id = getattr(server, "handler_id", False)
         self.file_only = getattr(server, "file_only", False)
         self.traffic = getattr(server, "traffic", False)
+        self.send_client_ip = getattr(server, "send_client_ip", False)
 
         self.logger = getattr(server, "logger", None)
         if self.logger is None:
@@ -567,7 +569,7 @@ class WebSocketServer(object):
             file_only=False,
             run_once=False, timeout=0, idle_timeout=0, traffic=False,
             tcp_keepalive=True, tcp_keepcnt=None, tcp_keepidle=None,
-            tcp_keepintvl=None):
+            tcp_keepintvl=None, send_client_ip=False):
 
         # settings
         self.RequestHandlerClass = RequestHandlerClass
@@ -581,6 +583,7 @@ class WebSocketServer(object):
         self.timeout        = timeout
         self.idle_timeout   = idle_timeout
         self.traffic        = traffic
+        self.send_client_ip = send_client_ip
         
         self.launch_time    = time.time()
         self.ws_connection  = False
