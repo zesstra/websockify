@@ -126,6 +126,12 @@ Traffic Legend:
         tqueue = []
         rlist = [self.request, target]
 
+        # send the client IP to the target mud.
+        if (self.send_client_ip):
+            clientip, clientport = self.request.getpeername()
+            self.log_message('Sending REMOTE_HOST=%s\n' % clientip)
+            tqueue.append('REMOTE_HOST=%s\n' % clientip)
+
         while True:
             wlist = []
 
@@ -359,6 +365,8 @@ def websockify_init():
             "directory containing configuration files of this form")
     parser.add_option("--libserver", action="store_true",
             help="use Python library SocketServer engine")
+    parser.add_option("--send-client-ip", action="store_true",
+            help="send client ip to target (in REMOTE_HOST=...)")
     (opts, args) = parser.parse_args()
 
     if opts.verbose:
